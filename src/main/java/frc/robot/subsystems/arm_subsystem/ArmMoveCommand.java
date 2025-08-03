@@ -5,6 +5,7 @@
 package frc.robot.subsystems.arm_subsystem;
 
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.subsystems.arm_subsystem.ArmContainer.ArmPosition;
 
 /**
  * 
@@ -13,18 +14,22 @@ public class ArmMoveCommand extends Command {
 
   // Class Variable
   private boolean atPosition;
+  private ArmPosition armTargetPosition;
+  private ArmPosition currentArmPosition;
 
   /**
    * 
-   * @param elevatorTargetPos
-   * @param elbowTargetAngle
-   * @param wristTargetAngle
-   * @param armSubsystem
+   * @param armTargetPosition the target position for the arm to move to
+   * @param armContainer the ArmContainer that holds the arm subsystems 
+   * This command is used to move the arm to a specific position.
    */
-  public ArmMoveCommand(double elevatorTargetPos, double elbowTargetAngle, double wristTargetAngle,
-                        ArmSubsystem armSubsystem) {
-    ArmSubsystem.setArmTargetPos(elevatorTargetPos, elbowTargetAngle, wristTargetAngle);
-    this.addRequirements(armSubsystem);
+  public ArmMoveCommand(ArmPosition armTargetPosition,
+                        ArmContainer armContainer) {
+    this.armTargetPosition = armTargetPosition;
+    this.atPosition = false;
+    //the armContainer only is used to keep track of the arm subsystem and its components
+    //the required subsytems to actually move are the ones inside the armContainer
+    this.addRequirements(armContainer.elevatorSubsystem, armContainer.differentialSubsystem);
   } // End ArmMoveCommand
   
 
@@ -34,8 +39,6 @@ public class ArmMoveCommand extends Command {
   @Override
   public void initialize() {
     System.out.println("Starting Arm Move.");
-    
-    // TODO add the call to arm move method
     atPosition = false;
   } // End initialize
 
@@ -44,7 +47,8 @@ public class ArmMoveCommand extends Command {
    */ 
   @Override
   public void execute() {
-    // TODO Check if arm subsystem is at the riht position
+    // TODO check arm states and give target positions to the relevant subsystems as required
+    // TODO Check if arm subsystem is at the right position
     // if (true){
     //   atPosition=true;
     // }

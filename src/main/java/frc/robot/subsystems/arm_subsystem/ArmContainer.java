@@ -7,20 +7,14 @@ package frc.robot.subsystems.arm_subsystem;
 import java.util.EnumSet;
 
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.subsystems.arm_subsystem.differential_subsystem.DifferentialSubsystem;
-import frc.robot.subsystems.arm_subsystem.elevator_subsystem.ElevatorSubsystem;
-import frc.robot.subsystems.arm_subsystem.intake_subsystem.IntakeSubsystem;
 
 
-public class ArmSubsystem extends SubsystemBase {
+public class ArmContainer {
   // Class variables
   protected static Timer timer = new Timer();
   private static boolean hasBeenInitialized = false;
 
-  // Subsytem intializations
+  // Subsystem intializations
   protected ElevatorSubsystem elevatorSubsystem = new ElevatorSubsystem();
   protected DifferentialSubsystem differentialSubsystem = new DifferentialSubsystem();
 
@@ -31,16 +25,15 @@ public class ArmSubsystem extends SubsystemBase {
   private static boolean atPosition         = false;
 
   // Enum Positions
-  private EnumSet<ElevatorState> elevatorStates = EnumSet.noneOf(ElevatorState.class);
+  private EnumSet<ArmState> elevatorStates = EnumSet.noneOf(ArmState.class);
   private EnumSet<ElbowState> elbowStates = EnumSet.noneOf(ElbowState.class);
   private EnumSet<WristState> wristStates = EnumSet.noneOf(WristState.class);
 
 
-  public enum ElevatorState {
-    UNKNOWN,              // Elevator is below 20"
-    SAFE_TO_DRIVE,        // Elevator position is safe for driving/moving the robot
-    SAFE_FOR_ELBOW_MOVE,  // Elevator is in a position where it's safe for elbow to move
-    AT_GROUND_POSITION    // Elevator is at or near ground (e.g., for intaking)
+  public enum ArmState {
+    UNKNOWN,              // 
+    SAFE_TO_DRIVE,        // All arm components safe for driving/moving the robot
+    STATIONARY            // Elevator is at or near ground (e.g., for intaking)
   } // End ElevatorState
 
   public enum ElbowState {
@@ -59,11 +52,17 @@ public class ArmSubsystem extends SubsystemBase {
     STOWED_POSITION,                 // Wrist is in a stowed position
     UNSAFE_POSITION_WARNING          // Wrist is in an unsafe config and needs to be corrected
   } // End WristState
-
-
-  public ArmSubsystem() {
+  /**
+   * Constructor for the ArmContainer.
+   * this is a container that holds the Elevator, and differential Subsystems, but is not used to set their motion 
+   * directly. Instead, it is used to keep track of the arm's state and provide some helper methods.
+   * The ArmMoveCommand is used to set the target positions for the Elevator, and differential, and move them accordingly.
+   * Initializes the timer for periodic updates.
+   */
+  public ArmContainer() {
     timer.start();
   } // End ArmSubsystem
+  
 
   /**
    * On robot's first initialization, intialize the ArmSubsystem, calling the intialize method 
@@ -80,31 +79,6 @@ public class ArmSubsystem extends SubsystemBase {
     }
   }
 
-
-  /**
-   * Set the target position for the ArmSubsytem.
-   * @param setElevatorTargetPos Target position for the Elevator in inches.
-   * @param setElbowTargetAngle Target Angle for the Elbow.
-   * @param setWristTargetAngle Target Angle for the Wrist.
-   */
-  protected static void setArmTargetPos(double setElevatorTargetPos, double setElbowTargetAngle, double setWristTargetAngle) {
-    elevatorTargetPos = setElevatorTargetPos;
-    elbowTargetAngle  = setElbowTargetAngle;
-    wristTargetAngle  = setWristTargetAngle;
-    atPosition        = false;
-  } // End setArmTargetPos
-
-  /**
-   * Set the target position for the ArmSubsytem (Command based.)
-   * @param setElevatorTargetPos Target position for the Elevator in inches.
-   * @param setElbowTargetAngle Target Angle for the Elbow.
-   * @param setWristTargetAngle Target Angle for the Wrist.
-   */
-  public Command setArmTargetPositionCommand(double setElevatorTargetPos, double setElbowTargetAngle, double setWristTargetAngle) {
-      return Commands.runOnce(() -> {setArmTargetPos(setElevatorTargetPos, setElbowTargetAngle, setWristTargetAngle);});    
-  } // End setArmTargetPositionCommand
-
-
   /**
    * Return if the entire ArmSubsytem, including the Elevator, Differential Elbow and Wrist has reached
    * its target positions.
@@ -114,43 +88,28 @@ public class ArmSubsystem extends SubsystemBase {
     return atPosition;
   } // End atPosition
 
-  public static double getElevatorTargetPos() {
-    return elevatorTargetPos;
+  public static ArmPosition getArmTargetPos() {
+    return new ArmPosition(wristTargetAngle, elevatorTargetPos, elbowTargetAngle);
   } // End getElevatorTargetPos
-  public static double getElbowTargetAngle() {
-    return elbowTargetAngle;
-  } // End getElbowTargetAngle
-  public static double getWristTargetAngle() {
-    return wristTargetAngle;
-  } // End getWristTargetAngle
-  public static void setElevatorTargetPos(double targetPos) {
-    elevatorTargetPos = targetPos;
-  } // End setElevatorTargetPos
-  public static void setElbowTargetAngle(double targetAngle) {
-    elbowTargetAngle = targetAngle;
-  } // End setElbowTargetAngle
-  public static void setWristTargetAngle(double targetAngle) {
-    wristTargetAngle = targetAngle;
-  } // End setWristTargetAngle
-
-
+  
   /**
    * 
-   * @return
+   * @return ArmState indicating the current state of the ArmSubsystem.
+   *         Returns SAFE_TO_DRIVE if the arm is in a safe position to drive.
    */
-  private ElevatorState getElevatorState() {
+  public ArmState getArmState() {
     // if (ele)
 
     // TODO finish method
 
-    return ElevatorState.AT_GROUND_POSITION;
+    return ArmState.SAFE_TO_DRIVE;
   }
 
   /** 
-   * Called once per scheduler run.
+   * Called once per scheduler run. Only if added to Robot.java
    */
-  @Override
   public void periodic() {
+    //TODO Add state checking code here
 
     // Only run once everytime the timer has elapsed.
     if(timer.hasElapsed(2.0)) {
@@ -159,12 +118,23 @@ public class ArmSubsystem extends SubsystemBase {
     }
   } // End periodic
 
-  /** 
-   * Called once per scheduler run within a simulation.
+  /**Helper class to store the Arm Positions*/
+  public static class ArmPosition {
+    public final double wristAngle;
+    public final double elbowAngle;
+    public final double elevatorHeightIn;
+  /**
+   * Constructor for the ArmPosition class.
+   * @param elevatorHeightIn Target position for the Elevator in inches.
+   * @param elbowAngle Target Angle for the Elbow.  
+   * @param wristAngle Target Angle for the Wrist.
    */
-  @Override
-  public void simulationPeriodic() {
-    periodic();
-  } // End simulationPeriodic
+
+    public ArmPosition(double elevatorHeightIn, double elbowAngle, double wristAngle) {
+        this.wristAngle = wristAngle;
+        this.elbowAngle = elbowAngle;
+        this.elevatorHeightIn = elevatorHeightIn;
+    }
+  }
 
 } // End ArmSubsystem

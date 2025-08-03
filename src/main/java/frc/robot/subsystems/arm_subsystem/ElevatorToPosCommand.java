@@ -1,7 +1,6 @@
-package frc.robot.subsystems.arm_subsystem.elevator_subsystem;
+package frc.robot.subsystems.arm_subsystem;
 
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.subsystems.arm_subsystem.ArmSubsystem;
 
 
 public class ElevatorToPosCommand extends Command {
@@ -28,10 +27,9 @@ public class ElevatorToPosCommand extends Command {
   /**
    * Set the target position to go to.
    * @param targetPos in inches.
-   * @param elevatorSubsystem object.
+   * @param elevatorSubsystem required subsystem object.
    */
   public ElevatorToPosCommand(double targetPos, ElevatorSubsystem elevatorSubsystem) {
-    ArmSubsystem.setElevatorTargetPos(targetPos);
     this.targetPos = targetPos;
     this.elevatorSubsystem = elevatorSubsystem;
     this.addRequirements(elevatorSubsystem);
@@ -113,36 +111,38 @@ public class ElevatorToPosCommand extends Command {
   public boolean isFinished() {
     return atPosition;
   }
-public class TrapezoidalMotionProfile {
-  public static MotionProfileResult generateProfile(double deMax, double vMax, double aMax, double dTarget) {
-      double tAccel = vMax / aMax;
-      double dAccel = 0.5 * aMax * tAccel * tAccel;
 
-      double tDeccel = vMax / deMax;
-      double dDeccel = 0.5 * deMax * tDeccel * tDeccel;
+  public class TrapezoidalMotionProfile {
+    public static MotionProfileResult generateProfile(double deMax, double vMax, double aMax, double dTarget) {
+        double tAccel = vMax / aMax;
+        double dAccel = 0.5 * aMax * tAccel * tAccel;
 
-      double vPeak = vMax;
-      double tConst = 0;
-      double dConst = 0;
+        double tDeccel = vMax / deMax;
+        double dDeccel = 0.5 * deMax * tDeccel * tDeccel;
 
-      // Check if the profile is triangular
-      if (dDeccel + dAccel >= Math.abs(dTarget)) {
-        vPeak = Math.sqrt((2 * Math.abs(dTarget)) / ((1 / aMax) + (1 / deMax)));;
-        tAccel = vPeak / aMax;
-        dAccel = 0.5 * aMax * tAccel * tAccel;
-        tDeccel = vPeak / deMax;
-        dDeccel = 0.5 * deMax * tDeccel * tDeccel;
-    } else {
-        dConst = Math.abs(dTarget) - (dAccel + dDeccel);
-        tConst = dConst / vMax;
+        double vPeak = vMax;
+        double tConst = 0;
+        double dConst = 0;
+
+        // Check if the profile is triangular
+        if (dDeccel + dAccel >= Math.abs(dTarget)) {
+          vPeak = Math.sqrt((2 * Math.abs(dTarget)) / ((1 / aMax) + (1 / deMax)));;
+          tAccel = vPeak / aMax;
+          dAccel = 0.5 * aMax * tAccel * tAccel;
+          tDeccel = vPeak / deMax;
+          dDeccel = 0.5 * deMax * tDeccel * tDeccel;
+      } else {
+          dConst = Math.abs(dTarget) - (dAccel + dDeccel);
+          tConst = dConst / vMax;
+      }
+
+        double tTotal = 2 * tAccel + tConst;
+
+        return new MotionProfileResult(tAccel, tDeccel, tConst, tTotal, vPeak);
     }
 
-      double tTotal = 2 * tAccel + tConst;
-
-      return new MotionProfileResult(tAccel, tDeccel, tConst, tTotal, vPeak);
-  }
-  // Helper class to store the result
-  public static class MotionProfileResult {
+    // Helper class to store the result
+    public static class MotionProfileResult {
       public final double tAccel;
       public final double tDeccel;
       public final double tConst;
@@ -156,6 +156,6 @@ public class TrapezoidalMotionProfile {
           this.tTotal = tTotal;
           this.vPeak = vPeak;
       }
+    }
   }
-}
 }
